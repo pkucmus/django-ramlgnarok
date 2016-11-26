@@ -1,0 +1,197 @@
+{% load ramlgnarok %}
+
+<html>
+  <head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous"> -->
+
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet">
+    <title>{{ api.title }} : {{ api.version }}</title>
+    <style type="text/css">
+      body {
+        font-family: "Open Sans";
+      }
+      .right-overlay {
+        right: 0;
+        top: 0;
+        height: 100%;
+        width: 40%;
+        position: fixed;
+        background-color: #f9f9f9;
+        padding: 0 10px;
+      }
+    </style>
+    <style>{{ pygments_style }}</style>
+  </head>
+  <body>
+    <div class="row">
+      <div class="col-xs-2">
+        <div class="media-types">
+        {% for media_type in api.media_types %}
+          <a href="#" data-mediatype="{{ media_type }}">{{ media_type }}</a>
+        {% endfor %}
+        </div>
+        <nav>
+          <ul>
+          {% for name, node in api.toc.iteritems %}
+            <li><a href="#{{ node.id }}">{{ name }}</a></li>
+          {% endfor %}
+          </ul>
+        </nav>
+      </div>
+      <div class="col-xs-5">
+        <div class="page-header">
+          <h1>{{ api.title }} <small>{{ api.version }}</small></h1>
+        </div>
+
+        <code>{{ api.base_uri }}</code>
+
+        <h2>Authentication</h2>
+
+        {% for name, sec_scheme in api.security_schemes.iteritems %}
+          <h3>{{ name }}</h3>
+          <blockquote>{{ sec_scheme.description|md }}</blockquote>
+        {% endfor %}
+
+        {% for endpoint in api.endpoints %}
+
+          {% if endpoint.methods %}
+
+            <h2 id="{{ endpoint.id}}">{{ endpoint.name }} <small>{{ endpoint.path }}</small></h2>
+            <p>
+              Secured by:
+              {% for security_scheme in endpoint.secured_by %}
+                <code>{{ security_scheme.name }}</code>
+              {% endfor %}
+            </p>
+
+            {% if endpoint.description %}
+              <blockquote>{{ endpoint.description|md }}</blockquote>
+            {% endif %}
+
+            <div class="row">
+              <div class="col-xs-12">
+              {% for method in endpoint.methods.values %}
+                <button type="button" data-method="{{ method.id }}"
+                  class="method-trigger btn
+                {% if method.name == 'get' %}
+                  btn-info
+                {% elif method.name == 'post' %}
+                  btn-danger
+                {% elif method.name == 'put' %}
+                  btn-warning
+                {% elif method.name == 'patch' %}
+                  btn-success
+                {% endif %}
+                 pull-right col-xs-1">
+                  {{ method.name }}
+                </button>
+              {% endfor %}
+              </div>
+            </div>
+
+            {% if not forloop.last %}
+            <hr/>
+            {% endif %}
+          {% endif %}
+
+        {% endfor %}
+      </div>
+      <div class="col-xs-5">
+        <div class="right-overlay">
+          <p class="method-placeholder" style="margin-top: 50%; text-align: center;">
+            Pick a <b>method</b> from the resource list to see it's details.
+          </p>
+
+        {% for endpoint in api.endpoints %}
+          {% for method in endpoint.methods.values %}
+            <div id="{{ method.id }}" class="method" style="display: none;">
+            <h2>
+              <span class="label
+                {% if method.name == 'get' %}
+                  label-info
+                {% elif method.name == 'post' %}
+                  label-danger
+                {% elif method.name == 'put' %}
+                  label-warning
+                {% elif method.name == 'patch' %}
+                  label-success
+                {% endif %}
+              ">{{ method.name }}</span>
+              <small>{{ endpoint.path }}</small>
+            </h2>
+            <p>
+              Secured by:
+              {% for security_scheme in endpoint.secured_by %}
+                <code>{{ security_scheme.name }}</code>
+              {% endfor %}
+            </p>
+            <hr/>
+            <blockquote>{{ method.description|md }}</blockquote>
+            <hr/>
+            <h4>Headers</h4>
+            {% for header in method.headers.values %}
+              {{ header.name }}
+            {% endfor %}
+            <hr/>
+            <h4>Body</h4>
+            {% for body in method.body %}
+              {{ body.media_type }}<br/>
+              {{ body.type }}<br/>
+            {% endfor %}
+            <hr/>
+            <h4>Responses</h4>
+              <ul class="nav nav-tabs response-tabs">
+                {% for status_code, response in method.responses.iteritems %}
+                  <li role="presentation">
+                    <a href="#{{ method.id}}-{{ response.status_code }}">
+                      {{ response.status_code }}
+                    </a>
+                  </li>
+                {% endfor %}
+              </ul>
+
+              <div class="tab-content">
+                {% for status_code, response in method.responses.iteritems %}
+                  <div role="tabpanel" class="tab-pane" id="{{ method.id}}-{{ response.status_code }}">
+                    {{ response }}<br/>
+                    {% for body in response.body %}
+                      {{ body.media_type }}<br/>
+                      {% for rendered in body.rendered.values %}
+                        {{ rendered }}
+                      {% endfor %}
+                    {% endfor %}
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        {% endfor %}
+        </div>
+      </div>
+    </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+  <script type="text/javascript">
+    (function() {
+      var mediaType = undefined;
+
+      $('.method-trigger').click(function(e){
+        $('.method').hide();
+        $('.method-placeholder').hide();
+        $('.method#' + e.target.dataset.method).show();
+      });
+
+      $('.media-types a').click(function(e){
+        mediaType = e.target.dataset.mediatype;
+      });
+
+      $('.response-tabs a').click(function (e) {
+        e.preventDefault()
+        $(this).tab('show')
+      });
+    })(jQuery);
+  </script>
+  </body>
+</html>
