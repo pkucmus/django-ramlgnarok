@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from collections import OrderedDict
+import xml.dom.minidom
 
 from django.utils.safestring import mark_safe
 from rest_framework.renderers import JSONRenderer
@@ -189,7 +190,7 @@ class Response(object):
 
     def __init__(self, status_code, root, data):
         self.status_code = status_code
-        self.description = status_code
+        self.description = data.get('description', '')
         if data.get('body') is not None:
             self.body = list(Body.build_bodies(root, data['body']))
         self.headers = [
@@ -217,6 +218,9 @@ class Body(object):
     def render_example(self, example):
         renderer = self.renderers[self.media_type]
         rendered = renderer().render(example, renderer_context={'indent': 4})
+        if self.media_type == 'application/xml':
+            xml_doc = xml.dom.minidom.parseString(rendered)
+            rendered = xml_doc.toprettyxml(indent='   ')
         lexer = get_lexer_for_mimetype(self.media_type)
         return mark_safe(highlight(rendered, lexer, formatter))
 

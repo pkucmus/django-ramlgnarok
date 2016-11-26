@@ -20,6 +20,17 @@
         background-color: #f9f9f9;
         padding: 0 10px;
       }
+      .method-trigger {
+        padding: 8px 15px;
+        width: 100%;
+        display: block;
+        font-size: 120%;
+        font-weight: bold;
+      }
+      .method-trigger:hover {
+        text-decoration: none;
+        cursor: pointer;
+      }
     </style>
     <style>{{ pygments_style }}</style>
   </head>
@@ -27,9 +38,21 @@
     <div class="row">
       <div class="col-xs-2">
         <div class="media-types">
-        {% for media_type in api.media_types %}
-          <a href="#" data-mediatype="{{ media_type }}">{{ media_type }}</a>
-        {% endfor %}
+          <div class="dropdown media-type-chooser">
+            <button
+              class="btn btn-default dropdown-toggle" type="button"
+              id="#media-type-chooser"
+              data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"
+            >
+              Media types
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="media-type-chooser">
+              {% for media_type in api.media_types %}
+              <li><a href="#">{{ media_type }}</a></li>
+              {% endfor %}
+            </ul>
+          </div>
         </div>
         <nav>
           <ul>
@@ -72,20 +95,19 @@
             <div class="row">
               <div class="col-xs-12">
               {% for method in endpoint.methods.values %}
-                <button type="button" data-method="{{ method.id }}"
-                  class="method-trigger btn
-                {% if method.name == 'get' %}
-                  btn-info
-                {% elif method.name == 'post' %}
-                  btn-danger
-                {% elif method.name == 'put' %}
-                  btn-warning
-                {% elif method.name == 'patch' %}
-                  btn-success
-                {% endif %}
-                 pull-right col-xs-1">
+                <a data-method="{{ method.id }}" class="method-trigger
+                  {% if method.name == 'get' %}
+                    bg-info text-info
+                  {% elif method.name == 'post' %}
+                    bg-danger text-danger
+                  {% elif method.name == 'put' %}
+                    bg-warning text-warning
+                  {% elif method.name == 'patch' %}
+                    bg-success text-success
+                  {% endif %}
+                  ">
                   {{ method.name }}
-                </button>
+                </a>
               {% endfor %}
               </div>
             </div>
@@ -138,6 +160,28 @@
             {% for body in method.body %}
               {{ body.media_type }}<br/>
               {{ body.type }}<br/>
+              <div class="dropdown example-chooser">
+                <button
+                  class="btn btn-default dropdown-toggle" type="button"
+                  id="#{{ method.id}}-{{ response.status_code }}-example"
+                  data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"
+                >
+                  Examples
+                  <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="{{ method.id}}-{{ response.status_code }}-example">
+                  {% for name, rendered in body.rendered.iteritems %}
+                  <li><a data-target="#" >{{ name }}</a></li>
+                  {% endfor %}
+                </ul>
+              </div>
+
+                {% for name, rendered in body.rendered.iteritems %}
+                  <div class='example' data-example="{{ name }}">
+                    <h4>{{ name }} <small>example</small></h4>
+                    {{ rendered }}
+                  </div>
+                {% endfor %}
             {% endfor %}
             <hr/>
             <h4>Responses</h4>
@@ -154,12 +198,33 @@
               <div class="tab-content">
                 {% for status_code, response in method.responses.iteritems %}
                   <div role="tabpanel" class="tab-pane" id="{{ method.id}}-{{ response.status_code }}">
-                    {{ response }}<br/>
+                    <blockquote>{{ response.description|md }}</blockquote>
                     {% for body in response.body %}
-                      {{ body.media_type }}<br/>
-                      {% for rendered in body.rendered.values %}
-                        {{ rendered }}
-                      {% endfor %}
+                      <div class="media-type" data-media-type="{{ body.media_type }}">
+                        <h4>{{ body.media_type }}</h4>
+                        <div class="dropdown example-chooser">
+                          <button
+                            class="btn btn-default dropdown-toggle" type="button"
+                            id="#{{ method.id}}-{{ response.status_code }}-example"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"
+                          >
+                            Examples
+                            <span class="caret"></span>
+                          </button>
+                          <ul class="dropdown-menu" aria-labelledby="{{ method.id}}-{{ response.status_code }}-example">
+                            {% for name, rendered in body.rendered.iteritems %}
+                            <li><a data-target="#" >{{ name }}</a></li>
+                            {% endfor %}
+                          </ul>
+                        </div>
+
+                        {% for name, rendered in body.rendered.iteritems %}
+                          <div class='example' data-example="{{ name }}">
+                            <h4>{{ name }} <small>example</small></h4>
+                            {{ rendered }}
+                          </div>
+                        {% endfor %}
+                      </div>
                     {% endfor %}
                   </div>
                 {% endfor %}
@@ -176,6 +241,25 @@
   <script type="text/javascript">
     (function() {
       var mediaType = undefined;
+      var example = 'default';
+
+      var switchMediaType = function(mediaType){
+        mediaType = mediaType;
+        console.log(mediaType);
+        $('.media-type').hide();
+        $('.media-type[data-media-type="' + mediaType + '"]').show();
+      };
+
+      switchMediaType('application/json');
+
+      var switchExamples = function(exampleName){
+        exampleName = exampleName;
+        console.log(exampleName);
+        $('.example').hide();
+        $('.example[data-example="' + exampleName + '"]').show();
+      };
+
+      switchExamples(example);
 
       $('.method-trigger').click(function(e){
         $('.method').hide();
@@ -190,6 +274,13 @@
       $('.response-tabs a').click(function (e) {
         e.preventDefault()
         $(this).tab('show')
+      });
+
+      $('.media-type-chooser li a').click(function(){
+        switchMediaType($(this).text());
+      });
+      $('.example-chooser li a').click(function(){
+        switchExamples($(this).text());
       });
     })(jQuery);
   </script>
