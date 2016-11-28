@@ -6,19 +6,11 @@
     <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous"> -->
 
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.css" />
     <title>{{ api.title }} : {{ api.version }}</title>
     <style type="text/css">
       body {
         font-family: "Open Sans";
-      }
-      .right-overlay {
-        right: 0;
-        top: 0;
-        height: 100%;
-        width: 40%;
-        position: fixed;
-        background-color: #f9f9f9;
-        padding: 0 10px;
       }
       .method-trigger {
         padding: 8px 15px;
@@ -31,20 +23,87 @@
         text-decoration: none;
         cursor: pointer;
       }
+      .menu {
+        width: 20%;
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100%;
+        padding: 0 10px;
+      }
+      .main {
+        width: 40%;
+        position: fixed;
+        left: 20%;
+        top: 0;
+        height: 100%;
+        padding: 0 16px;
+      }
+      .desc {
+        width: 40%;
+        position: fixed;
+        left: 60%;
+        top: 0;
+        height: 100%;
+        background-color: #f9f9f9;
+        padding: 0 16px 0 10px;
+      }
+      .logo {
+        color: #333;
+        font-weight: bold;
+        text-align: center;
+        font-size: 150%;
+        padding: 40px 0;
+      }
+      .logo small {
+        font-weight: normal;
+        font-size: 60%;
+      }
+      .media-types {
+        width: 100%;
+        text-align: center;
+        padding-top: 10px;
+      }
+      .toc {
+        padding-top: 20px;
+      }
+      .toc ul {
+        padding-left: 0;
+        list-style-type: none;
+      }
+      .toc ul li {
+        margin: 8px 0;
+        padding-left: 5px;
+        border-left: 4px solid #f3f3f3;
+      }
+      .toc ul li a {
+        font-size: 120%;
+      }
+      .toc ul li a:hover {
+        font-weight: bold;
+        text-decoration: none;
+      }
     </style>
     <style>{{ pygments_style }}</style>
   </head>
   <body>
     <div class="row">
-      <div class="col-xs-2">
+      <div class="menu">
+        <div class="logo">
+          FANCY LOGO<br/>
+          <small>uhh... fancy!</small>
+        </div>
         <div class="media-types">
           <div class="dropdown media-type-chooser">
+            <p>
+              Media type is set to <code></code>
+            </p>
             <button
-              class="btn btn-default dropdown-toggle" type="button"
+              class="btn btn-default btn-xs dropdown-toggle" type="button"
               id="#media-type-chooser"
               data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"
             >
-              Media types
+              Change media type
               <span class="caret"></span>
             </button>
             <ul class="dropdown-menu" aria-labelledby="media-type-chooser">
@@ -54,7 +113,7 @@
             </ul>
           </div>
         </div>
-        <nav>
+        <nav id="toc" class="toc">
           <ul>
           {% for name, node in api.toc.iteritems %}
             <li><a href="#{{ node.id }}">{{ name }}</a></li>
@@ -62,7 +121,7 @@
           </ul>
         </nav>
       </div>
-      <div class="col-xs-5">
+      <div class="main">
         <div class="page-header">
           <h1>{{ api.title }} <small>{{ api.version }}</small></h1>
         </div>
@@ -119,11 +178,10 @@
 
         {% endfor %}
       </div>
-      <div class="col-xs-5">
-        <div class="right-overlay">
-          <p class="method-placeholder" style="margin-top: 50%; text-align: center;">
-            Pick a <b>method</b> from the resource list to see it's details.
-          </p>
+      <div class="desc">
+        <p class="method-placeholder" style="margin-top: 50%; text-align: center;">
+          Pick a <b>method</b> from the resource list to see it's details.
+        </p>
 
         {% for endpoint in api.endpoints %}
           {% for method in endpoint.methods.values %}
@@ -160,28 +218,30 @@
             {% for body in method.body %}
               {{ body.media_type }}<br/>
               {{ body.type }}<br/>
-              <div class="dropdown example-chooser">
-                <button
-                  class="btn btn-default dropdown-toggle" type="button"
-                  id="#{{ method.id}}-{{ response.status_code }}-example"
-                  data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"
-                >
-                  Examples
-                  <span class="caret"></span>
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="{{ method.id}}-{{ response.status_code }}-example">
-                  {% for name, rendered in body.rendered.iteritems %}
-                  <li><a data-target="#" >{{ name }}</a></li>
-                  {% endfor %}
-                </ul>
-              </div>
+              <div class="example-chooser-root">
+                <div class="dropdown example-chooser">
+                  <button
+                    class="btn btn-default dropdown-toggle" type="button"
+                    id="#{{ method.id}}-{{ response.status_code }}-example"
+                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"
+                  >
+                    Examples
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" aria-labelledby="{{ method.id}}-{{ response.status_code }}-example">
+                    {% for name, rendered in body.rendered.iteritems %}
+                    <li><a data-target="#" >{{ name }}</a></li>
+                    {% endfor %}
+                  </ul>
+                </div>
 
                 {% for name, rendered in body.rendered.iteritems %}
-                  <div class='example' data-example="{{ name }}">
-                    <h4>{{ name }} <small>example</small></h4>
-                    {{ rendered }}
-                  </div>
+                <div class='example' data-example="{{ name }}">
+                  <h4>{{ name }} <small>example</small></h4>
+                  {{ rendered }}
+                </div>
                 {% endfor %}
+              </div>
             {% endfor %}
             <hr/>
             <h4>Responses</h4>
@@ -202,28 +262,30 @@
                     {% for body in response.body %}
                       <div class="media-type" data-media-type="{{ body.media_type }}">
                         <h4>{{ body.media_type }}</h4>
-                        <div class="dropdown example-chooser">
-                          <button
-                            class="btn btn-default dropdown-toggle" type="button"
-                            id="#{{ method.id}}-{{ response.status_code }}-example"
-                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"
-                          >
-                            Examples
-                            <span class="caret"></span>
-                          </button>
-                          <ul class="dropdown-menu" aria-labelledby="{{ method.id}}-{{ response.status_code }}-example">
-                            {% for name, rendered in body.rendered.iteritems %}
-                            <li><a data-target="#" >{{ name }}</a></li>
-                            {% endfor %}
-                          </ul>
-                        </div>
+                        <div class="example-chooser-root">
+                          <div class="dropup example-chooser">
+                            <button
+                              class="btn btn-default dropdown-toggle" type="button"
+                              id="#{{ method.id}}-{{ response.status_code }}-example"
+                              data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"
+                            >
+                              Examples
+                              <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="{{ method.id}}-{{ response.status_code }}-example">
+                              {% for name, rendered in body.rendered.iteritems %}
+                              <li><a data-target="#" >{{ name }}</a></li>
+                              {% endfor %}
+                            </ul>
+                          </div>
 
-                        {% for name, rendered in body.rendered.iteritems %}
+                          {% for name, rendered in body.rendered.iteritems %}
                           <div class='example' data-example="{{ name }}">
                             <h4>{{ name }} <small>example</small></h4>
                             {{ rendered }}
                           </div>
-                        {% endfor %}
+                          {% endfor %}
+                        </div>
                       </div>
                     {% endfor %}
                   </div>
@@ -232,34 +294,25 @@
             </div>
           {% endfor %}
         {% endfor %}
-        </div>
       </div>
     </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.js"></script>
   <script type="text/javascript">
     (function() {
       var mediaType = undefined;
-      var example = 'default';
 
       var switchMediaType = function(mediaType){
         mediaType = mediaType;
         console.log(mediaType);
         $('.media-type').hide();
         $('.media-type[data-media-type="' + mediaType + '"]').show();
+        $('.media-type-chooser code').text(mediaType);
       };
 
       switchMediaType('application/json');
-
-      var switchExamples = function(exampleName){
-        exampleName = exampleName;
-        console.log(exampleName);
-        $('.example').hide();
-        $('.example[data-example="' + exampleName + '"]').show();
-      };
-
-      switchExamples(example);
 
       $('.method-trigger').click(function(e){
         $('.method').hide();
@@ -280,8 +333,17 @@
         switchMediaType($(this).text());
       });
       $('.example-chooser li a').click(function(){
-        switchExamples($(this).text());
+        var parent = $(this).parents('.example-chooser-root');
+        parent.find('.example').hide();
+        parent.find('.example[data-example="' + $(this).text() + '"]').show();
       });
+
+      $('.example').hide();
+      $('.example[data-example="default"]').show();
+
+      $('.menu').mCustomScrollbar({'theme': 'minimal-dark', 'scrollInertia': 300});
+      $('.main').mCustomScrollbar({'theme': 'minimal-dark', 'scrollInertia': 300});
+      $('.desc').mCustomScrollbar({'theme': 'minimal-dark', 'scrollInertia': 300});
     })(jQuery);
   </script>
   </body>
